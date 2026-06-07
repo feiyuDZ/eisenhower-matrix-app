@@ -1,0 +1,26 @@
+{
+  "name": "艾森豪矩陣",
+  "short_name": "艾森豪",
+  "description": "快速分類任務，專注真正重要的事。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf7ef",
+  "theme_color": "#fbf7ef",
+  "orientation": "portrait",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

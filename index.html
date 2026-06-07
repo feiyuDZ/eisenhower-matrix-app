@@ -416,6 +416,12 @@
     .row{grid-template-columns:1fr}
   }
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fbf7ef">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="艾森豪矩陣">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
   <main class="app">
@@ -746,5 +752,14 @@
 
   render();
 </script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    });
+  }
+</script>
+
 </body>
 </html>
