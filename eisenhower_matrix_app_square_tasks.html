@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>艾森豪矩陣 App｜方塊任務版</title>
+<style>
+  :root{
+    --bg:#fbf7ef;
+    --ink:#20242a;
+    --muted:#7e858c;
+    --blue:#1f63d1;
+    --green:#2f9d44;
+    --red:#d72638;
+    --orange:#de7119;
+    --line:#d8d1c5;
+    --card:#ffffffcc;
+    --shadow:0 10px 30px rgba(45,35,20,.10);
+    --radius:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(47,157,68,.08), transparent 24%),
+      radial-gradient(circle at 82% 18%, rgba(215,38,56,.08), transparent 24%),
+      radial-gradient(circle at 80% 84%, rgba(222,113,25,.08), transparent 26%),
+      linear-gradient(180deg,#fffaf2,var(--bg));
+    overflow:hidden;
+  }
+  body:before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:.25;
+    background-image:
+      radial-gradient(rgba(80,70,55,.18) .7px, transparent .7px);
+    background-size:7px 7px;
+    mix-blend-mode:multiply;
+  }
+  .app{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    padding:20px clamp(14px,4vw,34px) 16px;
+    max-width:1060px;
+    margin:auto;
+    position:relative;
+  }
+  header{
+    display:grid;
+    grid-template-columns:48px 1fr 92px;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .menu,.add{
+    border:1px solid rgba(90,90,90,.14);
+    background:rgba(255,255,255,.58);
+    box-shadow:0 6px 18px rgba(40,30,20,.08);
+    border-radius:18px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#4f5962;
+    backdrop-filter:blur(10px);
+  }
+  .menu{font-size:27px}
+  .add{
+    cursor:pointer;
+    color:var(--blue);
+    gap:4px;
+    flex-direction:column;
+    font-size:13px;
+    font-weight:700;
+  }
+  .add b{font-size:26px; line-height:18px}
+  h1{
+    margin:2px 0 2px;
+    text-align:center;
+    font-size:clamp(30px,5.5vw,54px);
+    line-height:1.05;
+    letter-spacing:.02em;
+  }
+  .subtitle{
+    text-align:center;
+    color:var(--muted);
+    font-size:clamp(14px,2.8vw,21px);
+    margin-bottom:12px;
+  }
+  .toolbar{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .toolbtn{
+    border:1px solid rgba(80,75,70,.16);
+    background:rgba(255,255,255,.58);
+    color:#46515c;
+    border-radius:999px;
+    padding:9px 12px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    box-shadow:0 5px 16px rgba(30,25,15,.06);
+  }
+  .matrix-wrap{
+    flex:1;
+    min-height:0;
+    position:relative;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+  }
+  .axis-top,.axis-bottom{
+    text-align:center;
+    font-weight:900;
+    font-size:clamp(19px,3.6vw,32px);
+    line-height:1.1;
+  }
+  .axis-top{color:var(--blue); margin-bottom:8px}
+  .axis-bottom{color:var(--orange); margin-top:8px}
+  .matrix-area{
+    position:relative;
+    min-height:0;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+  }
+  .side-label{
+    writing-mode:horizontal-tb;
+    font-weight:900;
+    font-size:clamp(17px,3.4vw,28px);
+    z-index:3;
+    width:72px;
+    text-align:center;
+  }
+  .side-label.left{color:var(--green)}
+  .side-label.right{color:var(--red)}
+  .matrix{
+    height:100%;
+    min-height:430px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:10px;
+    position:relative;
+  }
+  .matrix:before,.matrix:after{
+    content:"";
+    position:absolute;
+    z-index:4;
+    pointer-events:none;
+    border-radius:999px;
+  }
+  .matrix:before{
+    left:50%; top:-18px; bottom:-18px; width:3px;
+    transform:translateX(-50%);
+    background:linear-gradient(var(--blue),var(--orange));
+  }
+  .matrix:after{
+    top:50%; left:-18px; right:-18px; height:3px;
+    transform:translateY(-50%);
+    background:linear-gradient(90deg,var(--green),var(--red));
+  }
+  .dot{
+    position:absolute;
+    z-index:5;
+    width:14px; height:14px;
+    border-radius:50%;
+    box-shadow:0 0 0 3px rgba(255,255,255,.8);
+  }
+  .dot.top{top:-22px; left:50%; transform:translateX(-50%); background:var(--blue)}
+  .dot.bottom{bottom:-22px; left:50%; transform:translateX(-50%); background:var(--orange)}
+  .dot.left{left:-22px; top:50%; transform:translateY(-50%); background:var(--green)}
+  .dot.right{right:-22px; top:50%; transform:translateY(-50%); background:var(--red)}
+  .quad{
+    position:relative;
+    border:1px solid rgba(120,105,85,.16);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height:0;
+  }
+  .quad[data-q="plan"]{background:rgba(65,160,78,.075)}
+  .quad[data-q="do"]{background:rgba(225,55,70,.075)}
+  .quad[data-q="delete"]{background:rgba(222,113,25,.060)}
+  .quad[data-q="quick"]{background:rgba(222,113,25,.082)}
+  .hint{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:clamp(25px,5.5vw,54px);
+    font-weight:900;
+    line-height:1.3;
+    opacity:.21;
+    padding:20px;
+    pointer-events:none;
+    z-index:0;
+  }
+  .quad[data-q="plan"] .hint{color:var(--green)}
+  .quad[data-q="do"] .hint{color:var(--red)}
+  .quad[data-q="delete"] .hint{color:var(--orange)}
+  .quad[data-q="quick"] .hint{color:#bf7a43}
+  .items{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(82px, 92px));
+    grid-auto-rows:auto;
+    align-content:start;
+    justify-content:start;
+    gap:10px;
+    min-height:0;
+    height:100%;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:2px 2px 18px;
+    scrollbar-width:thin;
+  }
+  .items::-webkit-scrollbar{width:7px}
+  .items::-webkit-scrollbar-thumb{
+    background:rgba(80,70,60,.22);
+    border-radius:999px;
+  }
+  .task{
+    width:100%;
+    aspect-ratio:1 / 1;
+    background:rgba(255,255,255,.80);
+    border:1px solid rgba(65,55,45,.13);
+    border-radius:18px;
+    padding:10px;
+    box-shadow:0 8px 18px rgba(40,30,15,.08);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    position:relative;
+    backdrop-filter:blur(6px);
+    user-select:none;
+  }
+  .task:active{cursor:grabbing; transform:scale(.98)}
+  .task.done{opacity:.52}
+  .task.done .task-title{text-decoration:line-through}
+  .task-title{
+    font-size:13px;
+    font-weight:900;
+    line-height:1.25;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    word-break:break-word;
+  }
+  .task-note{display:none}
+  .task-due-dot{
+    position:absolute;
+    left:8px;
+    bottom:7px;
+    font-size:10px;
+    color:#69717a;
+    opacity:.75;
+  }
+  .done-mark{
+    position:absolute;
+    right:6px;
+    top:6px;
+    width:22px;
+    height:22px;
+    border:0;
+    border-radius:999px;
+    background:rgba(235,231,224,.82);
+    color:#4c5358;
+    cursor:pointer;
+    font-weight:900;
+    line-height:22px;
+    padding:0;
+  }
+  .task.done .done-mark{
+    background:rgba(47,157,68,.16);
+    color:var(--green);
+  }
+  .iconbtn{
+    width:28px; height:28px;
+    border:0;
+    border-radius:10px;
+    background:rgba(235,231,224,.75);
+    cursor:pointer;
+    color:#4c5358;
+    font-weight:900;
+  }
+  .drag-over{outline:3px dashed rgba(31,99,209,.35); outline-offset:-8px}
+  .empty-tip{
+    position:relative;
+    z-index:2;
+    color:#8b8f93;
+    font-size:13px;
+    font-weight:700;
+    margin-top:auto;
+    text-align:center;
+    opacity:.72;
+  }
+  .bottom-tip{
+    margin:12px auto 0;
+    width:min(760px,94%);
+    border:1px solid rgba(120,105,85,.18);
+    background:rgba(255,255,255,.65);
+    border-radius:999px;
+    padding:11px 16px;
+    color:#555d65;
+    box-shadow:0 8px 24px rgba(40,30,15,.08);
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    text-align:center;
+  }
+  .bulb{
+    width:30px;height:30px;border-radius:50%;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--blue);
+    flex:0 0 auto;
+    font-size:19px;
+  }
+  dialog{
+    border:0;
+    border-radius:26px;
+    width:min(520px,92vw);
+    padding:0;
+    background:#fffaf4;
+    color:var(--ink);
+    box-shadow:0 24px 80px rgba(20,15,8,.25);
+  }
+  dialog::backdrop{background:rgba(30,25,18,.36); backdrop-filter:blur(3px)}
+  .modal{padding:22px}
+  .modal h2{margin:0 0 14px;font-size:24px}
+  label{display:block;font-weight:800;margin:12px 0 6px;color:#343b42}
+  input,textarea,select{
+    width:100%;
+    border:1px solid rgba(80,70,60,.2);
+    background:#fff;
+    color:var(--ink);
+    border-radius:14px;
+    padding:12px 13px;
+    font:inherit;
+    outline:none;
+  }
+  textarea{min-height:82px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  .primary,.secondary{
+    border:0;
+    border-radius:14px;
+    padding:11px 15px;
+    cursor:pointer;
+    font-weight:900;
+  }
+  .primary{background:var(--blue);color:#fff}
+  .secondary{background:#ebe5dc;color:#3b4248}
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%) translateY(120px);
+    background:#20242a;
+    color:white;
+    padding:10px 16px;
+    border-radius:999px;
+    box-shadow:0 12px 30px rgba(0,0,0,.22);
+    transition:.25s;
+    z-index:20;
+    font-weight:800;
+    font-size:14px;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @media (max-width:720px){
+    body{overflow:auto}
+    .app{height:auto;min-height:100%;padding:16px 10px 14px}
+    header{grid-template-columns:42px 1fr 78px}
+    .menu,.add{height:42px;border-radius:15px}
+    .add{font-size:12px}.add b{font-size:23px}
+    .subtitle{margin-bottom:9px}
+    .toolbar{gap:6px}
+    .toolbtn{font-size:12px;padding:8px 10px}
+    .matrix-area{grid-template-columns:46px 1fr 46px}
+    .side-label{width:46px;font-size:17px}
+    .matrix{
+      min-height:560px;
+      gap:7px;
+    }
+    .quad{padding:10px;border-radius:18px}
+    .hint{font-size:25px}
+    .items{grid-template-columns:repeat(auto-fill, minmax(68px, 78px)); gap:8px}
+    .task{border-radius:15px; padding:8px}
+    .task-title{font-size:12px}
+    .bottom-tip{border-radius:20px;font-size:12px;line-height:1.45}
+    .row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <button class="menu" title="選單" onclick="showToast('目前為單檔離線版')">☰</button>
+      <div>
+        <h1>艾森豪矩陣</h1>
+        <div class="subtitle">快速分類任務，專注真正重要的事</div>
+      </div>
+      <button class="add" id="addBtn"><b>＋</b><span>新增任務</span></button>
+    </header>
+
+    <div class="toolbar">
+      <button class="toolbtn" id="exportBtn">匯出資料</button>
+      <button class="toolbtn" id="importBtn">匯入資料</button>
+      <button class="toolbtn" id="clearDoneBtn">清除已完成</button>
+      <button class="toolbtn" id="resetBtn">清空全部</button>
+      <input id="fileInput" type="file" accept="application/json" hidden>
+    </div>
+
+    <section class="matrix-wrap">
+      <div class="axis-top">重要</div>
+      <div class="matrix-area">
+        <div class="side-label left">不緊急</div>
+        <div class="matrix" id="matrix">
+          <span class="dot top"></span><span class="dot bottom"></span><span class="dot left"></span><span class="dot right"></span>
+
+          <section class="quad" data-q="plan">
+            <div class="hint">需要較長的<br>專注時間</div>
+            <div class="items" data-list="plan"></div>
+          </section>
+
+          <section class="quad" data-q="do">
+            <div class="hint">馬上管理<br>並進行</div>
+            <div class="items" data-list="do"></div>
+          </section>
+
+          <section class="quad" data-q="delete">
+            <div class="hint">減少將時間<br>投入在此</div>
+            <div class="items" data-list="delete"></div>
+          </section>
+
+          <section class="quad" data-q="quick">
+            <div class="hint">僅利用碎片時間<br>快速完成</div>
+            <div class="items" data-list="quick"></div>
+          </section>
+        </div>
+        <div class="side-label right">緊急</div>
+      </div>
+      <div class="axis-bottom">不重要</div>
+    </section>
+
+    <div class="bottom-tip"><span class="bulb">💡</span><span>任務會以小方塊顯示；點擊方塊查看／編輯完整內容，拖曳方塊可移動分類。</span></div>
+  </main>
+
+  <dialog id="taskDialog">
+    <form class="modal" method="dialog" id="taskForm">
+      <h2 id="dialogTitle">新增任務</h2>
+      <input type="hidden" id="taskId">
+      <label for="taskTitle">任務名稱</label>
+      <input id="taskTitle" maxlength="80" placeholder="例如：完成報價單、回覆客戶、整理企劃..." required>
+      <label for="taskNote">備註</label>
+      <textarea id="taskNote" maxlength="300" placeholder="可填寫期限、下一步、相關細節"></textarea>
+      <div class="row">
+        <div>
+          <label for="taskQuadrant">分類</label>
+          <select id="taskQuadrant">
+            <option value="do">重要且緊急｜馬上管理並進行</option>
+            <option value="plan">重要但不緊急｜需要較長的專注時間</option>
+            <option value="quick">不重要但緊急｜僅利用碎片時間快速完成</option>
+            <option value="delete">不重要且不緊急｜減少投入時間</option>
+          </select>
+        </div>
+        <div>
+          <label for="taskDue">期限</label>
+          <input id="taskDue" type="date">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary" value="delete" type="button" id="deleteBtn" style="margin-right:auto;display:none;">刪除</button>
+        <button class="secondary" value="cancel" type="button" id="cancelBtn">取消</button>
+        <button class="primary" value="default" type="submit">儲存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = "eisenhower_matrix_app_v1";
+  const lists = ["plan","do","delete","quick"];
+  const labels = {
+    plan:"重要但不緊急",
+    do:"重要且緊急",
+    delete:"不重要且不緊急",
+    quick:"不重要但緊急"
+  };
+  let tasks = load();
+  let dragId = null;
+
+  function uid(){
+    return "t_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return [
+      {id:uid(), title:"範例：今天必須處理的急件", note:"可拖曳到其他象限", q:"do", due:"", done:false, created:Date.now()},
+      {id:uid(), title:"範例：規劃長期收入項目", note:"需要完整專注時間", q:"plan", due:"", done:false, created:Date.now()+1}
+    ];
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function render(){
+    for(const q of lists){
+      const el = document.querySelector(`[data-list="${q}"]`);
+      el.innerHTML = "";
+      const filtered = tasks.filter(t => t.q === q);
+      filtered.sort((a,b)=>(a.done-b.done)||(a.created-b.created));
+      for(const t of filtered) el.appendChild(taskNode(t));
+      if(filtered.length === 0){
+        const tip = document.createElement("div");
+        tip.className = "empty-tip";
+        tip.textContent = "拖曳或新增任務到這裡";
+        el.appendChild(tip);
+      }
+    }
+  }
+
+  function taskNode(t){
+    const node = document.createElement("article");
+    node.className = "task" + (t.done ? " done" : "");
+    node.draggable = true;
+    node.dataset.id = t.id;
+    node.title = "點擊查看完整任務；拖曳可移動分類";
+
+    const done = document.createElement("button");
+    done.className = "done-mark";
+    done.type = "button";
+    done.title = t.done ? "取消完成" : "標記完成";
+    done.textContent = "✓";
+    done.onclick = (e)=>{
+      e.stopPropagation();
+      t.done = !t.done;
+      save();
+      render();
+    };
+
+    const title = document.createElement("div");
+    title.className = "task-title";
+    title.textContent = t.title;
+
+    node.append(done, title);
+
+    if(t.due){
+      const due = document.createElement("div");
+      due.className = "task-due-dot";
+      due.textContent = "期限";
+      node.appendChild(due);
+    }
+
+    node.addEventListener("click",()=>openEdit(t.id));
+    node.addEventListener("dragstart",(e)=>{
+      dragId = t.id;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", t.id);
+      setTimeout(()=>node.style.opacity=".35",0);
+    });
+    node.addEventListener("dragend",()=>{
+      node.style.opacity="";
+      dragId = null;
+      document.querySelectorAll(".quad").forEach(q=>q.classList.remove("drag-over"));
+    });
+    return node;
+  }
+
+  function openAdd(){
+    document.getElementById("dialogTitle").textContent = "新增任務";
+    document.getElementById("taskId").value = "";
+    document.getElementById("taskTitle").value = "";
+    document.getElementById("taskNote").value = "";
+    document.getElementById("taskQuadrant").value = "do";
+    document.getElementById("taskDue").value = "";
+    document.getElementById("deleteBtn").style.display = "none";
+    document.getElementById("taskDialog").showModal();
+    setTimeout(()=>document.getElementById("taskTitle").focus(), 50);
+  }
+
+  function openEdit(id){
+    const t = tasks.find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById("dialogTitle").textContent = "編輯任務";
+    document.getElementById("taskId").value = t.id;
+    document.getElementById("taskTitle").value = t.title;
+    document.getElementById("taskNote").value = t.note || "";
+    document.getElementById("taskQuadrant").value = t.q;
+    document.getElementById("taskDue").value = t.due || "";
+    document.getElementById("deleteBtn").style.display = "inline-block";
+    document.getElementById("taskDialog").showModal();
+  }
+
+  function removeTask(id){
+    if(!confirm("確定刪除此任務？")) return;
+    tasks = tasks.filter(t=>t.id!==id);
+    save(); render(); showToast("已刪除");
+  }
+
+  function showToast(msg){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(()=>el.classList.remove("show"),1800);
+  }
+
+  document.getElementById("addBtn").addEventListener("click", openAdd);
+  document.getElementById("cancelBtn").addEventListener("click",()=>document.getElementById("taskDialog").close());
+  document.getElementById("deleteBtn").addEventListener("click",()=>{
+    const id = document.getElementById("taskId").value;
+    if(!id) return;
+    document.getElementById("taskDialog").close();
+    removeTask(id);
+  });
+
+  document.getElementById("taskForm").addEventListener("submit",(e)=>{
+    e.preventDefault();
+    const id = document.getElementById("taskId").value;
+    const title = document.getElementById("taskTitle").value.trim();
+    if(!title) return;
+    const payload = {
+      title,
+      note:document.getElementById("taskNote").value.trim(),
+      q:document.getElementById("taskQuadrant").value,
+      due:document.getElementById("taskDue").value
+    };
+    if(id){
+      const t = tasks.find(x=>x.id===id);
+      Object.assign(t, payload);
+      showToast("已更新");
+    }else{
+      tasks.push({id:uid(), ...payload, done:false, created:Date.now()});
+      showToast("已新增");
+    }
+    save(); render();
+    document.getElementById("taskDialog").close();
+  });
+
+  document.querySelectorAll(".quad").forEach(quad=>{
+    quad.addEventListener("dragover",(e)=>{
+      e.preventDefault();
+      quad.classList.add("drag-over");
+    });
+    quad.addEventListener("dragleave",()=>quad.classList.remove("drag-over"));
+    quad.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/plain") || dragId;
+      const t = tasks.find(x=>x.id===id);
+      if(t){
+        t.q = quad.dataset.q;
+        save(); render();
+        showToast("已移動到「" + labels[t.q] + "」");
+      }
+      quad.classList.remove("drag-over");
+    });
+  });
+
+  document.getElementById("clearDoneBtn").addEventListener("click",()=>{
+    const count = tasks.filter(t=>t.done).length;
+    if(!count){showToast("沒有已完成任務"); return;}
+    if(!confirm("清除全部已完成任務？")) return;
+    tasks = tasks.filter(t=>!t.done);
+    save(); render(); showToast("已清除已完成任務");
+  });
+
+  document.getElementById("resetBtn").addEventListener("click",()=>{
+    if(!confirm("確定清空全部任務？此動作無法復原。")) return;
+    tasks = [];
+    save(); render(); showToast("已清空");
+  });
+
+  document.getElementById("exportBtn").addEventListener("click",()=>{
+    const data = {
+      app:"艾森豪矩陣",
+      version:1,
+      exportedAt:new Date().toISOString(),
+      tasks
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "eisenhower-matrix-tasks.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast("已匯出 JSON");
+  });
+
+  document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("fileInput").click());
+  document.getElementById("fileInput").addEventListener("change", async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const imported = Array.isArray(data) ? data : data.tasks;
+      if(!Array.isArray(imported)) throw new Error("格式錯誤");
+      tasks = imported.map(x=>({
+        id:x.id || uid(),
+        title:String(x.title || "未命名任務"),
+        note:String(x.note || ""),
+        q:lists.includes(x.q) ? x.q : "do",
+        due:x.due || "",
+        done:!!x.done,
+        created:x.created || Date.now()
+      }));
+      save(); render(); showToast("匯入成功");
+    }catch(err){
+      alert("匯入失敗：JSON 格式不正確");
+    }finally{
+      e.target.value = "";
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
